@@ -3,8 +3,10 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000; // Port von Vercel oder lokal
+
 app.use(express.json());
-app.use(express.static('public')); // Stelle sicher, dass deine statischen Dateien hier sind
+app.use(express.static('public')); // Statische Dateien bereitstellen
 
 const NOTES_FILE = path.join(__dirname, 'notes.json');
 
@@ -32,17 +34,6 @@ async function writeNotes(notes) {
 app.get('/api/notes', async (req, res) => {
     const notes = await readNotes();
     res.json(notes);
-});
-
-// GET /api/notes/:id - Eine bestimmte Notiz abrufen
-app.get('/api/notes/:id', async (req, res) => {
-    const notes = await readNotes();
-    const note = notes.find(n => n.id === parseInt(req.params.id));
-    if (note) {
-        res.json(note);
-    } else {
-        res.status(404).json({ error: 'Note not found' });
-    }
 });
 
 // POST /api/notes - Neue Notiz erstellen
@@ -81,6 +72,11 @@ app.delete('/api/notes/:id', async (req, res) => {
     } else {
         res.status(404).json({ error: 'Note not found' });
     }
+});
+
+// Server starten
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
 
 // Export der App für Vercel
