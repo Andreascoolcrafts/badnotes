@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BadNotes Andreas Rittsel</title>
+    <style>
+        :root {
+            --bg-primary: #0f0e17;
+            --bg-secondary: rgba(255, 255, 255, 0.1);
+            --text-primary: #fffffe;
+            --text-secondary: #a7a9be;
+            --accent: #ff8906;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(255, 137, 6, 0.2) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(255, 137, 6, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(255, 137, 6, 0.2) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(255, 137, 6, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(255, 137, 6, 0.2) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(255, 137, 6, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(255, 137, 6, 0.2) 0px, transparent 50%);
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .note-list {
+            flex-grow: 1;
+            padding: 10px;
+        }
+
+        .note-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .note-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .note-item.active {
+            background-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-left: 300px;
+            background-color: rgba(15, 14, 23, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button:hover {
+            background-color: #ffa726;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 137, 6, 0.2);
+        }
+
+        .button-outline {
+            background-color: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .button-outline:hover {
+            background-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .note-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .note-title:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .note-body {
+            flex-grow: 1;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            resize: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .note-body:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ffa726;
+        }
+    </style>
+</head>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>BadNotes</h1>
+        </div>
+        <div class="note-list" id="noteList">
+            <!-- Notizen werden hier dynamisch eingefügt -->
+        </div>
+        <center><a href="index.html" style="text-decoration: none; color: white;">Zum neuen BadNotes Design</a></center>
+    </div>
+    <div class="main-content">
+        <div class="toolbar">
+            <div>
+                <button class="button button-outline" id="importBtn">Importieren</button>
+                <button class="button button-outline" id="exportBtn">Exportieren</button>
+            </div>
+            <div>
+                <button class="button" id="saveBtn">Speichern</button>
+                <button class="button" id="newNoteBtn">Neue Notiz</button>
+            </div>
+        </div>
+        <div class="note-content">
+            <input type="text" class="note-title" id="noteTitle" placeholder="Titel der Notiz">
+            <textarea class="note-body" id="noteBody" placeholder="Beginnen Sie hier mit dem Schreiben Ihrer Notiz..."></textarea>
+        </div>
+    </div>
+    <script>
+        let currentNoteId = null;
+        let hasUnsavedChanges = false;
+
+        // Funktion zum Laden aller Notizen
+        async function loadNotes() {
+            try {
+                const response = await fetch('/api/notes');
+                const notes = await response.json();
+                const noteList = document.getElementById('noteList');
+                noteList.innerHTML = '';
+                notes.forEach(note => {
+                    const noteItem = document.createElement('div');
+                    noteItem.className = 'note-item';
+                    noteItem.textContent = note.title;
+                    noteItem.dataset.id = note.id;
+                    noteItem.onclick = () => loadNote(note.id);
+                    noteList.appendChild(noteItem);
+                });
+            } catch (error) {
+                console.error('Fehler beim Laden der Notizen:', error);
+            }
+        }
+
+        // Funktion zum Laden einer einzelnen Notiz
+        async function loadNote(id) {
+            try {
+                const response = await fetch(`/api/notes/${id}`);
+                const note = await response.json();
+                document.getElementById('noteTitle').value = note.title;
+                document.getElementById('noteBody').value = note.content;
+                currentNoteId = note.id;
+                setUnsavedChanges(false);
+                
+                // Aktualisiere die aktive Notiz in der Seitenleiste
+                const noteItems = document.querySelectorAll('.note-item');
+                noteItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.id === id.toString()) {
+                        item.classList.add('active');
+                    }
+                });
+            } catch (error) {
+                console.error('Fehler beim Laden der Notiz:', error);
+            }
+        }
+
+        // Funktion zum Speichern einer Notiz
+        async function saveNote() {
+            const title = document.getElementById('noteTitle').value;
+            const content = document.getElementById('noteBody').value;
+            const method = currentNoteId ? 'PUT' : 'POST';
+            const url = currentNoteId ? `/api/notes/${currentNoteId}` : '/api/notes';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, content }),
+                });
+                if (response.ok) {
+                    const savedNote = await response.json();
+                    alert('Notiz erfolgreich gespeichert!');
+                    currentNoteId = savedNote.id;
+                    setUnsavedChanges(false);
+                    await loadNotes();
+                    loadNote(currentNoteId);
+                } else {
+                    alert('Fehler beim Speichern der Notiz.');
+                }
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Fehler beim Speichern der Notiz.');
+            }
+        }
+
+        // Funktion zum Setzen des Speicherstatus
+        function setUnsavedChanges(unsaved) {
+            hasUnsavedChanges = unsaved;
+            const saveBtn = document.getElementById('saveBtn');
+            if (unsaved) {
+                saveBtn.classList.add('unsaved-changes');
+            } else {
+                saveBtn.classList.remove('unsaved-changes');
+            }
+        }
+
+        // Event-Listener für Änderungen in Titel und Inhalt
+        document.getElementById('noteTitle').addEventListener('input', () => setUnsavedChanges(true));
+        document.getElementById('noteBody').addEventListener('input', () => setUnsavedChanges(true));
+
+        // Event-Listener für den "Neue Notiz" Button
+        document.getElementById('newNoteBtn').addEventListener('click', () => {
+            if (hasUnsavedChanges) {
+                if (confirm('Es gibt ungespeicherte Änderungen. Möchten Sie trotzdem eine neue Notiz erstellen?')) {
+                    createNewNote();
+                }
+            } else {
+                createNewNote();
+            }
+        });
+
+        // Funktion zum Erstellen einer neuen Notiz
+        function createNewNote() {
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteBody').value = '';
+            currentNoteId = null;
+            setUnsavedChanges(false);
+            // Entferne die aktive Klasse von allen Notizen in der Seitenleiste
+            document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
+        }
+
+        // Event-Listener für den "Speichern" Button
+        document.getElementById('saveBtn').addEventListener('click', saveNote);
+
+        // Event-Listener für Import und Export Buttons
+        document.getElementById('importBtn').addEventListener('click', importNotes);
+        document.getElementById('exportBtn').addEventListener('click', exportNotes);
+
+        // Funktion zum Importieren von Notizen
+        function importNotes() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const notes = JSON.parse(e.target.result);
+                        for (const note of notes) {
+                            await fetch('/api/notes', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(note),
+                            });
+                        }
+                        alert('Notizen erfolgreich importiert!');
+                        loadNotes();
+                    } catch (error) {
+                        console.error('Fehler beim Importieren:', error);
+                        alert('Fehler beim Importieren der Notizen.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Funktion zum Exportieren von Notizen
+        async function exportNotes() {
+            try {
+                
+                const response = await fetch('/api/notes');
+                const notes = await response.json();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "badnotes_export.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            } catch (error) {
+                console.error('Fehler beim Exportieren:', error);
+                alert('Fehler beim Exportieren der Notizen.');
+            }
+        }
+
+        // Laden Sie die Notizen beim Start der Anwendung
+        loadNotes();
+    </script>
+</body>
+</html>
