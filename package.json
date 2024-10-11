@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "netlify deploy --prod"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +13,9 @@
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "express": "^4.21.1",
-    "firebase-functions": "^6.0.1"
+    "firebase-functions": "^6.0.1",
+    "netlify-cli": "^17.37.0",
+    "netlify-lambda": "^2.0.16",
+    "serverless-http": "^3.2.0"
   }
 }
