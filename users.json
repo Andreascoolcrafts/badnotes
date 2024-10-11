@@ -1,0 +1,32 @@
+[
+    {
+        "username": "Andreas",
+        "password": "Andreas21!",
+        "profileImage": "/images/andreasPFP.png"
+    },
+    {
+        "username": "admin",
+        "password": "admin123",
+        "profileImage": "/images/adminPFP.png"
+    },
+    {
+        "username": "TwinkieBar",
+        "password": "äigfoucifüo",
+        "profileImage": "/images/EricPFP.jpeg"
+    },
+    {
+        "username": "Arsenii",
+        "password": "arseniiPW1",
+        "profileImage": "/images/ArseniiPFP.png"
+    },
+    {
+        "username": "Jakob",
+        "password": "JakobPW2",
+        "profileImage": "/images/JakobPFP.png"
+    },
+    {
+        "username": "Oleksandr",
+        "password": "BMW-E38",
+        "profileImage": "/images/OleksandrPFP.png"
+    }
+]
