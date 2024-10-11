@@ -1,30 +1,10 @@
-const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
-const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
-
-const app = express();
-const port = 3000;
-
-app.use(express.json());
-app.use(express.static('public'));
-app.use(cookieParser());
-
-const serverless = require("serverless-http");
-const router = express.Router();
-
-router.get("/", (req, res) => {
-    res.send("App is running..");
-});
-
-app.use("/.netlify/functions/app", router);
-module.exports.handler = serverless(app);
 
 const NOTES_FILE = path.join(__dirname, 'notes.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// Hilfsfunktion zum Lesen der Notizen
 async function readNotes() {
     try {
         const data = await fs.readFile(NOTES_FILE, 'utf8');
@@ -35,7 +15,6 @@ async function readNotes() {
     }
 }
 
-// Hilfsfunktion zum Schreiben der Notizen
 async function writeNotes(notes) {
     try {
         await fs.writeFile(NOTES_FILE, JSON.stringify(notes, null, 2));
@@ -44,7 +23,6 @@ async function writeNotes(notes) {
     }
 }
 
-// Hilfsfunktion zum Lesen der Benutzer
 async function readUsers() {
     try {
         const data = await fs.readFile(USERS_FILE, 'utf8');
@@ -55,122 +33,111 @@ async function readUsers() {
     }
 }
 
-// Middleware zur Überprüfung der Authentifizierung
-function isAuthenticated(req, res, next) {
-    if (req.cookies.authToken) {
-        next();
-    } else {
-        res.status(401).json({ error: 'Nicht authentifiziert' });
-    }
+function isAuthenticated(event) {
+    return event.headers.cookie && event.headers.cookie.includes('authToken');
 }
 
-// Login-Route
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    const users = await readUsers();
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-        const token = `${username}:${crypto.randomBytes(64).toString('hex')}`;
-        res.cookie('authToken', token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
-            sameSite: 'strict',
-            secure: process.env.NODE_ENV === 'production'
-        });
-        res.json({ success: true, username: user.username, profileImage: user.profileImage });
-    } else {
-        res.status(401).json({ error: 'Ungültige Anmeldedaten' });
-    }
-});
+exports.handler = async (event, context) => {
+    const path = event.path.replace(/^\/\.netlify\/functions\/api/, '');
+    const method = event.httpMethod;
 
-// Logout-Route
-app.post('/api/logout', (req, res) => {
-    res.clearCookie('authToken');
-    res.json({ success: true });
-});
-
-// GET /api/notes - Alle Notizen abrufen
-app.get('/api/notes', isAuthenticated, async (req, res) => {
-    const notes = await readNotes();
-    res.json(notes);
-});
-
-// GET /api/notes/:id - Eine bestimmte Notiz abrufen
-app.get('/api/notes/:id', isAuthenticated, async (req, res) => {
-    const notes = await readNotes();
-    const note = notes.find(n => n.id === parseInt(req.params.id));
-    if (note) {
-        res.json(note);
-    } else {
-        res.status(404).json({ error: 'Note not found' });
-    }
-});
-
-// POST /api/notes - Neue Notiz erstellen
-app.post('/api/notes', isAuthenticated, async (req, res) => {
-    const notes = await readNotes();
-    const newNote = {
-        id: Date.now(),
-        title: req.body.title,
-        content: req.body.content
-    };
-    notes.push(newNote);
-    await writeNotes(notes);
-    res.status(201).json(newNote);
-});
-
-// PUT /api/notes/:id - Notiz aktualisieren
-app.put('/api/notes/:id', isAuthenticated, async (req, res) => {
-    const notes = await readNotes();
-    const index = notes.findIndex(n => n.id === parseInt(req.params.id));
-    if (index !== -1) {
-        notes[index] = { ...notes[index], ...req.body };
-        await writeNotes(notes);
-        res.json(notes[index]);
-    } else {
-        res.status(404).json({ error: 'Note not found' });
-    }
-});
-
-// DELETE /api/notes/:id - Notiz löschen
-app.delete('/api/notes/:id', isAuthenticated, async (req, res) => {
-    const notes = await readNotes();
-    const filteredNotes = notes.filter(n => n.id !== parseInt(req.params.id));
-    if (filteredNotes.length < notes.length) {
-        await writeNotes(filteredNotes);
-        res.status(204).send();
-    } else {
-        res.status(404).json({ error: 'Note not found' });
-    }
-});
-
-// Add this route after the other API routes
-app.get('/api/check-auth', async (req, res) => {
-    if (req.cookies.authToken) {
-        try {
-            const users = await readUsers();
-            // In einer echten Anwendung würden Sie hier den Token validieren und den Benutzer anhand des Tokens identifizieren
-            // Für dieses Beispiel verwenden wir den Benutzernamen, der im Token gespeichert ist
-            const username = req.cookies.authToken.split(':')[0]; // Annahme: Token-Format ist "username:randomString"
-            const user = users.find(u => u.username === username);
-
-            if (user) {
-                res.json({
-                    username: user.username,
-                    profileImage: user.profileImage
-                });
-            } else {
-                res.status(401).json({ error: 'Benutzer nicht gefunden' });
-            }
-        } catch (error) {
-            console.error('Fehler beim Lesen der Benutzerdaten:', error);
-            res.status(500).json({ error: 'Interner Serverfehler' });
+    if (path === '/login' && method === 'POST') {
+        const { username, password } = JSON.parse(event.body);
+        const users = await readUsers();
+        const user = users.find(u => u.username === username && u.password === password);
+        if (user) {
+            const token = crypto.randomBytes(64).toString('hex');
+            return {
+                statusCode: 200,
+                headers: {
+                    'Set-Cookie': `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict`,
+                },
+                body: JSON.stringify({ success: true, username: user.username, profileImage: user.profileImage }),
+            };
+        } else {
+            return { statusCode: 401, body: JSON.stringify({ error: 'Ungültige Anmeldedaten' }) };
         }
-    } else {
-        res.status(401).json({ error: 'Nicht authentifiziert' });
     }
-});
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+    if (path === '/logout' && method === 'POST') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Set-Cookie': 'authToken=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict',
+            },
+            body: JSON.stringify({ success: true }),
+        };
+    }
+
+    if (path === '/check-auth' && method === 'GET') {
+        if (isAuthenticated(event)) {
+            const users = await readUsers();
+            const user = users[0]; // Für dieses Beispiel verwenden wir einfach den ersten Benutzer
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ username: user.username, profileImage: user.profileImage }),
+            };
+        } else {
+            return { statusCode: 401, body: JSON.stringify({ error: 'Nicht authentifiziert' }) };
+        }
+    }
+
+    if (!isAuthenticated(event)) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Nicht authentifiziert' }) };
+    }
+
+    if (path === '/notes' && method === 'GET') {
+        const notes = await readNotes();
+        return { statusCode: 200, body: JSON.stringify(notes) };
+    }
+
+    if (path.startsWith('/notes/') && method === 'GET') {
+        const id = parseInt(path.split('/')[2]);
+        const notes = await readNotes();
+        const note = notes.find(n => n.id === id);
+        if (note) {
+            return { statusCode: 200, body: JSON.stringify(note) };
+        } else {
+            return { statusCode: 404, body: JSON.stringify({ error: 'Note not found' }) };
+        }
+    }
+
+    if (path === '/notes' && method === 'POST') {
+        const notes = await readNotes();
+        const newNote = {
+            id: Date.now(),
+            title: JSON.parse(event.body).title,
+            content: JSON.parse(event.body).content,
+        };
+        notes.push(newNote);
+        await writeNotes(notes);
+        return { statusCode: 201, body: JSON.stringify(newNote) };
+    }
+
+    if (path.startsWith('/notes/') && method === 'PUT') {
+        const id = parseInt(path.split('/')[2]);
+        const notes = await readNotes();
+        const index = notes.findIndex(n => n.id === id);
+        if (index !== -1) {
+            notes[index] = { ...notes[index], ...JSON.parse(event.body) };
+            await writeNotes(notes);
+            return { statusCode: 200, body: JSON.stringify(notes[index]) };
+        } else {
+            return { statusCode: 404, body: JSON.stringify({ error: 'Note not found' }) };
+        }
+    }
+
+    if (path.startsWith('/notes/') && method === 'DELETE') {
+        const id = parseInt(path.split('/')[2]);
+        const notes = await readNotes();
+        const filteredNotes = notes.filter(n => n.id !== id);
+        if (filteredNotes.length < notes.length) {
+            await writeNotes(filteredNotes);
+            return { statusCode: 204 };
+        } else {
+            return { statusCode: 404, body: JSON.stringify({ error: 'Note not found' }) };
+        }
+    }
+
+    return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
+};
