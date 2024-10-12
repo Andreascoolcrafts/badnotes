@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BadNotes Andreas Rittsel</title>
     <link rel="manifest" href="/app.webmanifest">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0f1a2e;
@@ -24,7 +26,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
             background-color: var(--bg-primary);
             color: var(--text-primary);
@@ -83,8 +85,11 @@
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            transition: width 0.3s ease;
             overflow-y: auto;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
         }
 
         .sidebar-header {
@@ -131,6 +136,9 @@
             flex-direction: column;
             background-color: rgba(18, 32, 57, 0.5);
             backdrop-filter: blur(10px);
+            margin-left: 300px;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .toolbar {
@@ -206,6 +214,7 @@
             font-size: 16px;
             line-height: 1.6;
             transition: all 0.3s ease;
+            font-family: 'Roboto', sans-serif;
         }
 
         .note-body:focus {
@@ -241,7 +250,8 @@
         }
 
         .modal-content {
-            background-color: var(--bg-secondary);
+            /** background-color: var(--bg-secondary); **/
+            background-color: rgba(31, 44, 69);
             margin: 15% auto;
             padding: 20px;
             border: 1px solid var(--border);
@@ -278,6 +288,31 @@
             margin-left: 5px;
         }
 
+        /* Neue Stile für den erweiterten Editor */
+        .note-body strong {
+            font-weight: bold;
+        }
+
+        .note-body em {
+            font-style: italic;
+        }
+
+        .note-body ul,
+        .note-body ol {
+            padding-left: 20px;
+        }
+
+        .note-body li {
+            margin-bottom: 5px;
+        }
+
+        .note-body .comment {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 10px;
+            margin: 10px 0;
+        }
+
         /* Responsive Styles */
         @media (max-width: 768px) {
             #appContainer {
@@ -287,29 +322,32 @@
             .sidebar {
                 width: 100%;
                 height: auto;
+                position: static;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
             }
 
             .main-content {
+                margin-left: 0;
                 height: calc(100vh - 200px);
-                /* Adjust based on your sidebar height */
             }
 
             .toolbar {
                 flex-wrap: wrap;
+                justify-content: center;
             }
 
             .toolbar>div {
                 width: 100%;
                 display: flex;
-                justify-content: space-between;
+                justify-content: center;
                 margin-bottom: 10px;
             }
 
             .button {
                 padding: 8px 16px;
                 font-size: 12px;
+                margin: 0 5px;
             }
 
             .note-title {
@@ -339,7 +377,7 @@
             background: var(--accent);
         }
 
-        /* Neues CSS für die Banner */
+        /* Banner Styles */
         .banner {
             position: fixed;
             top: 20px;
@@ -391,7 +429,58 @@
             padding: 0;
             margin-left: 10px;
         }
+
+        /* Neues CSS für den Tooltip */
+        .format-tooltip {
+            position: absolute;
+            background: rgba(18, 32, 57, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+
+        .format-tooltip button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .format-tooltip button:hover {
+            color: var(--accent);
+        }
+
+        .format-tooltip select {
+            background: rgba(58, 110, 165, 0.2);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 5px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        /* Zusätzliche Stile für verschiedene Schriftarten */
+        .note-body .serif {
+            font-family: Georgia, serif;
+        }
+
+        .note-body .sans-serif {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .note-body .monospace {
+            font-family: 'Roboto Mono', monospace;
+        }
     </style>
+
+
+    <link rel="icon" href="/images/badNotesIcon.png" type="image/png">
 </head>
 
 <body>
@@ -430,8 +519,8 @@
             </div>
             <div class="note-content">
                 <input type="text" class="note-title" id="noteTitle" placeholder="Titel der Notiz">
-                <textarea class="note-body" id="noteBody"
-                    placeholder="Beginnen Sie hier mit dem Schreiben Ihrer Notiz..."></textarea>
+                <div class="note-body" id="noteBody" contenteditable="true"
+                    placeholder="Beginnen Sie hier mit dem Schreiben Ihrer Notiz..."></div>
             </div>
         </div>
     </div>
@@ -448,9 +537,19 @@
     <!-- Neues Banner-Element -->
     <div id="banner" class="banner">
         <span class="banner-icon"></span>
-
         <span class="banner-message"></span>
         <button class="banner-close">&times;</button>
+    </div>
+
+    <!-- Neues Tooltip-Element -->
+    <div id="formatTooltip" class="format-tooltip">
+        <select id="fontSelect">
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="monospace">Monospace</option>
+        </select>
+        <button id="boldBtn" title="Fett (Strg+B)"><strong>B</strong></button>
+        <button id="italicBtn" title="Kursiv (Strg+I)"><em>I</em></button>
     </div>
 
     <script>
@@ -484,7 +583,7 @@
         // Cookie-Abfrage beim ersten Aufruf
         window.onload = async function () {
             try {
-                const response = await fetch('/.netlify/functions/api/check-auth');
+                const response = await fetch('/api/check-auth');
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById('profileImage').src = data.profileImage;
@@ -514,7 +613,7 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/.netlify/functions/api/login', {
+                const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -536,7 +635,7 @@
         // Logout-Funktionalität
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
-                await fetch('/.netlify/functions/api/logout', { method: 'POST' });
+                await fetch('/api/logout', { method: 'POST' });
                 showLogin();
             } catch (error) {
                 console.error('Fehler beim Abmelden:', error);
@@ -576,7 +675,7 @@
 
         async function checkAuth() {
             try {
-                const response = await fetch('/.netlify/functions/api/check-auth');
+                const response = await fetch('/api/check-auth');
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById('profileImage').src = data.profileImage;
@@ -595,7 +694,7 @@
         // Funktion zum Laden aller Notizen
         async function loadNotes() {
             try {
-                const response = await fetch('/.netlify/functions/api/notes');
+                const response = await fetch('/api/notes');
                 const notes = await response.json();
                 const noteList = document.getElementById('noteList');
                 noteList.innerHTML = '';
@@ -604,7 +703,7 @@
                     noteItem.className = 'note-item';
                     noteItem.textContent = note.title;
                     noteItem.dataset.id = note.id;
-                    noteItem.onclick = () => loadNote(note.id);
+                    noteItem.onclick = () => confirmAndLoadNote(note.id);
                     noteList.appendChild(noteItem);
                 });
             } catch (error) {
@@ -613,13 +712,24 @@
             }
         }
 
+        // Funktion zur Bestätigung und zum Laden einer Notiz
+        async function confirmAndLoadNote(id) {
+            if (hasUnsavedChanges) {
+                if (confirm('Es gibt ungespeicherte Änderungen. Möchten Sie trotzdem die Notiz wechseln?')) {
+                    await loadNote(id);
+                }
+            } else {
+                await loadNote(id);
+            }
+        }
+
         // Funktion zum Laden einer einzelnen Notiz
         async function loadNote(id) {
             try {
-                const response = await fetch(`/.netlify/functions/api/notes/${id}`);
+                const response = await fetch(`/api/notes/${id}`);
                 const note = await response.json();
                 document.getElementById('noteTitle').value = note.title;
-                document.getElementById('noteBody').value = note.content;
+                document.getElementById('noteBody').innerHTML = note.content;
                 currentNoteId = note.id;
                 setUnsavedChanges(false);
 
@@ -646,9 +756,9 @@
         // Funktion zum Speichern einer Notiz
         async function saveNote() {
             const title = document.getElementById('noteTitle').value;
-            const content = document.getElementById('noteBody').value;
+            const content = document.getElementById('noteBody').innerHTML;
             const method = currentNoteId ? 'PUT' : 'POST';
-            const url = currentNoteId ? `/.netlify/functions/api/notes/${currentNoteId}` : '/.netlify/functions/api/notes';
+            const url = currentNoteId ? `/api/notes/${currentNoteId}` : '/api/notes';
 
             try {
                 const response = await fetch(url, {
@@ -703,7 +813,7 @@
         // Funktion zum Erstellen einer neuen Notiz
         function createNewNote() {
             document.getElementById('noteTitle').value = '';
-            document.getElementById('noteBody').value = '';
+            document.getElementById('noteBody').innerHTML = '';
             currentNoteId = null;
             setUnsavedChanges(false);
             // Entferne die aktive Klasse von allen Notizen in der Seitenleiste
@@ -729,7 +839,7 @@
                     try {
                         const notes = JSON.parse(e.target.result);
                         for (const note of notes) {
-                            await fetch('/.netlify/functions/api/notes', {
+                            await fetch('/api/notes', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -752,7 +862,7 @@
         // Funktion zum Exportieren von Notizen
         async function exportNotes() {
             try {
-                const response = await fetch('/.netlify/functions/api/notes');
+                const response = await fetch('/api/notes');
                 const notes = await response.json();
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes));
                 const downloadAnchorNode = document.createElement('a');
@@ -812,6 +922,135 @@
 
         window.addEventListener('resize', updateToggleButtonVisibility);
         updateToggleButtonVisibility();
+
+        // Erweiterter Editor-Funktionalität
+        const noteBody = document.getElementById('noteBody');
+
+        noteBody.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const currentLine = range.startContainer;
+
+                if (currentLine.nodeType === Node.TEXT_NODE) {
+                    currentLine = currentLine.parentNode;
+                }
+
+                if (currentLine.tagName === 'LI') {
+                    const parentList = currentLine.parentNode;
+                    if (currentLine.textContent.trim() === '') {
+                        e.preventDefault();
+                        if (parentList.children.length === 1) {
+                            const p = document.createElement('p');
+                            p.innerHTML = '<br>';
+                            parentList.parentNode.insertBefore(p, parentList.nextSibling);
+                            parentList.remove();
+                        } else {
+                            const nextElement = currentLine.nextElementSibling;
+                            currentLine.remove();
+                            if (nextElement) {
+                                selection.collapse(nextElement, 0);
+                            }
+                        }
+                    } else if (parentList.tagName === 'OL') {
+                        e.preventDefault();
+                        const newLi = document.createElement('li');
+                        parentList.insertBefore(newLi, currentLine.nextSibling);
+                        selection.collapse(newLi, 0);
+                    }
+                }
+            }
+        });
+
+        noteBody.addEventListener('input', function () {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const currentLine = range.startContainer;
+
+            if (currentLine.nodeType === Node.TEXT_NODE && currentLine.parentNode.tagName !== 'LI') {
+                const text = currentLine.textContent;
+                if (text.startsWith('* ') && text.length > 2) {
+                    const ul = document.createElement('ul');
+                    const li = document.createElement('li');
+                    li.textContent = text.slice(2);
+                    ul.appendChild(li);
+                    range.deleteContents();
+                    range.insertNode(ul);
+                    selection.collapse(li, li.textContent.length);
+                } else if (text.match(/^\d+\. /) && text.length > 3) {
+                    const ol = document.createElement('ol');
+                    const li = document.createElement('li');
+                    li.textContent = text.slice(text.indexOf(' ') + 1);
+                    ol.appendChild(li);
+                    range.deleteContents();
+                    range.insertNode(ol);
+                    selection.collapse(li, li.textContent.length);
+                } else if (text.startsWith('# ') && text.length > 2) {
+                    const comment = document.createElement('div');
+                    comment.className = 'comment';
+                    comment.textContent = text.slice(2);
+                    range.deleteContents();
+                    range.insertNode(comment);
+                    selection.collapse(comment, comment.textContent.length);
+                }
+            }
+        });
+
+        // Neuer Code für den Formatierungs-Tooltip
+        const formatTooltip = document.getElementById('formatTooltip');
+        const fontSelect = document.getElementById('fontSelect');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+
+        noteBody.addEventListener('mouseup', function (e) {
+            const selection = window.getSelection();
+            if (selection.toString().length > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                formatTooltip.style.display = 'block';
+                formatTooltip.style.top = `${rect.top - formatTooltip.offsetHeight - 10 + window.scrollY}px`;
+                formatTooltip.style.left = `${rect.left + (rect.width / 2) - (formatTooltip.offsetWidth / 2)}px`;
+            } else {
+                formatTooltip.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('mousedown', function (e) {
+            if (!formatTooltip.contains(e.target) && e.target !== formatTooltip) {
+                formatTooltip.style.display = 'none';
+            }
+        });
+
+        fontSelect.addEventListener('change', function () {
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand('fontName', false, this.value);
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const span = document.createElement('span');
+                span.className = this.value;
+                range.surroundContents(span);
+            }
+        });
+
+        boldBtn.addEventListener('click', function () {
+            document.execCommand('bold', false, null);
+        });
+
+        italicBtn.addEventListener('click', function () {
+            document.execCommand('italic', false, null);
+        });
+
+        // Bestehende Tastenkombinationen beibehalten
+        noteBody.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 'b') {
+                e.preventDefault();
+                document.execCommand('bold', false, null);
+            } else if (e.ctrlKey && e.key === 'i') {
+                e.preventDefault();
+                document.execCommand('italic', false, null);
+            }
+        });
     </script>
 </body>
 

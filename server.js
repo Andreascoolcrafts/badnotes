@@ -5,10 +5,12 @@ const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 
 const app = express();
+const port = process.env.PORT || 10000;
+
 app.use(express.json());
+app.use(express.static('public'));
 app.use(cookieParser());
 
-// Pfade zu den JSON-Dateien
 const NOTES_FILE = path.join(__dirname, 'notes.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
@@ -90,7 +92,7 @@ app.get('/api/notes/:id', isAuthenticated, async (req, res) => {
     if (note) {
         res.json(note);
     } else {
-        res.status(404).json({ error: 'Notiz nicht gefunden' });
+        res.status(404).json({ error: 'Note not found' });
     }
 });
 
@@ -116,7 +118,7 @@ app.put('/api/notes/:id', isAuthenticated, async (req, res) => {
         await writeNotes(notes);
         res.json(notes[index]);
     } else {
-        res.status(404).json({ error: 'Notiz nicht gefunden' });
+        res.status(404).json({ error: 'Note not found' });
     }
 });
 
@@ -128,15 +130,17 @@ app.delete('/api/notes/:id', isAuthenticated, async (req, res) => {
         await writeNotes(filteredNotes);
         res.status(204).send();
     } else {
-        res.status(404).json({ error: 'Notiz nicht gefunden' });
+        res.status(404).json({ error: 'Note not found' });
     }
 });
 
-// GET /api/check-auth - Authentifizierungsstatus prüfen
+// Add this route after the other API routes
 app.get('/api/check-auth', async (req, res) => {
     if (req.cookies.authToken) {
         try {
             const users = await readUsers();
+            // In einer echten Anwendung würden Sie hier den Token validieren und den Benutzer anhand des Tokens identifizieren
+            // Für dieses Beispiel verwenden wir den Benutzernamen, der im Token gespeichert ist
             const username = req.cookies.authToken.split(':')[0]; // Annahme: Token-Format ist "username:randomString"
             const user = users.find(u => u.username === username);
 
@@ -157,12 +161,6 @@ app.get('/api/check-auth', async (req, res) => {
     }
 });
 
-// Netlify Function exportieren
-module.exports.handler = async (event, context) => {
-    return await new Promise((resolve, reject) => {
-        app.handle(event, context, (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
-        });
-    });
-};
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
