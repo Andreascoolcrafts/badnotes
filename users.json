@@ -1,6 +1,6 @@
 [
     {
-        "username": "Andreas",
+        "username": "Andreas Rittsel",
         "password": "Andreas21!",
         "profileImage": "/images/andreasPFP.png"
     },
@@ -23,6 +23,11 @@
         "username": "Jakob",
         "password": "JakobPW2",
         "profileImage": "/images/JakobPFP.png"
+    },
+    {
+        "username": "Kevin",
+        "password": "KevinPW3",
+        "profileImage": "/images/KevinPFP.png"
     },
     {
         "username": "Oleksandr",
