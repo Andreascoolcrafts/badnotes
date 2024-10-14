@@ -2,7 +2,8 @@
   {
     "id": 1728584346087,
     "title": "Grundlagen BadNotes (12.10.'24)",
-    "content": "<span style=\"font-weight: bold; font-family: serif;\">Herzlich Willkommen zu Microgam.es BadNotes,&nbsp;</span><div><div>diese Anwendung befindet sich zurzeit in der Entwicklung.\nWesentliche Funktionen die <font face=\"sans-serif\">fehlen</font>, ist das ändern der Schriftart sowie das <span class=\"serif\" style=\"\"><span class=\"sans-serif\" style=\"\"><span class=\"monospace\" style=\"font-family: serif;\"><span class=\"serif\">löschen</span></span></span></span> einzelner Notizen.\nSpeicher und Exportfunktion sind bereits aktiviert.\nBitte diese Notiz nicht aus dem Datensatz entfernen.&nbsp;<div><ul><li>mit Strg+B / Cmd+B <span class=\"serif\" style=\"\"><span class=\"monospace\" style=\"font-family: sans-serif;\"><span class=\"sans-serif\">markiert</span></span></span> man Text fettgedruckt</li><li>mit Strg+I / <font face=\"serif\">Cmd</font>+I markiert man Text kursiv</li><li>mit * erstellt man eine ungeordnete Liste, die durch 2maliges betätigen der Eingabe taste beendet wird</li><li>mit 1. erstellt man eine geordnete Liste, die analog zur ungeordneten Liste beendet wird</li></ul><div><div class=\"comment\">mit # erstellt man einen Kommentar wie diesen</div></div>&nbsp;</div><div><span class=\"monospace\" style=\"font-style: italic;\"><span class=\"serif\" style=\"\"><span class=\"sans-serif\" style=\"font-family: monospace;\"><span class=\"monospace\">Verfasst von Andreas Rittsel am 12.10.2024</span></span></span></span></div></div></div>"
+    "content": "<span style=\"font-weight: bold; font-family: serif;\">Herzlich Willkommen zu Microgam.es BadNotes,&nbsp;</span><div><div>diese Anwendung befindet sich zurzeit in der Entwicklung.\nWesentliche Funktionen die <font face=\"sans-serif\">fehlen</font>, ist das ändern der Schriftart sowie das <span class=\"serif\" style=\"\"><span class=\"sans-serif\" style=\"\"><span class=\"monospace\" style=\"font-family: serif;\"><span class=\"serif\">löschen</span></span></span></span> einzelner Notizen.\nSpeicher und Exportfunktion sind bereits aktiviert.\nBitte diese Notiz nicht aus dem Datensatz entfernen.&nbsp;<div><ul><li>mit Strg+B / Cmd+B <span class=\"serif\" style=\"\"><span class=\"monospace\" style=\"font-family: sans-serif;\"><span class=\"sans-serif\">markiert</span></span></span> man Text fettgedruckt</li><li>mit Strg+I / <font face=\"serif\">Cmd</font>+I markiert man Text kursiv</li><li>mit * erstellt man eine ungeordnete Liste, die durch 2maliges betätigen der Eingabe taste beendet wird</li><li>mit 1. erstellt man eine geordnete Liste, die analog zur ungeordneten Liste beendet wird</li></ul><div><div class=\"comment\">mit # erstellt man einen Kommentar wie diesen</div></div>&nbsp;</div><div><span class=\"monospace\" style=\"font-style: italic;\"><span class=\"serif\" style=\"\"><span class=\"sans-serif\" style=\"font-family: monospace;\"><span class=\"monospace\">Verfasst von Andreas Rittsel am 12.10.2024</span></span></span></span></div></div></div>",
+    "locked": false
   },
   {
     "id": 1728726671638,
@@ -13,5 +14,12 @@
     "id": 1728729320568,
     "title": "Werneuchen ",
     "content": "Ich war nach Werneuchen gefahren"
+  },
+  {
+    "id": 1728913386193,
+    "title": "Neue Notiz",
+    "content": "Alles neu",
+    "createdBy": "Andreas Rittsel",
+    "lastEditedBy": "Andreas Rittsel"
   }
 ]

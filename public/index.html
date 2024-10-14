@@ -250,8 +250,7 @@
         }
 
         .modal-content {
-            /** background-color: var(--bg-secondary); **/
-            background-color: rgba(31, 44, 69);
+            background-color: var(--bg-secondary);
             margin: 15% auto;
             padding: 20px;
             border: 1px solid var(--border);
@@ -288,7 +287,6 @@
             margin-left: 5px;
         }
 
-        /* Neue Stile für den erweiterten Editor */
         .note-body strong {
             font-weight: bold;
         }
@@ -313,7 +311,6 @@
             margin: 10px 0;
         }
 
-        /* Responsive Styles */
         @media (max-width: 768px) {
             #appContainer {
                 flex-direction: column;
@@ -359,7 +356,6 @@
             }
         }
 
-        /* Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -377,7 +373,6 @@
             background: var(--accent);
         }
 
-        /* Banner Styles */
         .banner {
             position: fixed;
             top: 20px;
@@ -430,7 +425,6 @@
             margin-left: 10px;
         }
 
-        /* Neues CSS für den Tooltip */
         .format-tooltip {
             position: absolute;
             background: rgba(18, 32, 57, 0.8);
@@ -465,7 +459,6 @@
             margin-right: 10px;
         }
 
-        /* Zusätzliche Stile für verschiedene Schriftarten */
         .note-body .serif {
             font-family: Georgia, serif;
         }
@@ -477,10 +470,58 @@
         .note-body .monospace {
             font-family: 'Roboto Mono', monospace;
         }
+
+        .properties-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .properties-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .properties-modal-content {
+            background-color: var(--bg-secondary);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .properties-close {
+            color: var(--text-secondary);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .properties-close:hover,
+        .properties-close:focus {
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
-
-
-    <link rel="icon" href="/images/badNotesIcon.png" type="image/png">
 </head>
 
 <body>
@@ -512,6 +553,7 @@
                 <div style="display: flex; align-items: center;">
                     <button class="button" id="saveBtn">Speichern</button>
                     <button class="button" id="newNoteBtn">Neue Notiz</button>
+                    <button class="properties-btn" id="propertiesBtn" title="Eigenschaften der Notiz">ℹ️</button>
                     <div id="profileButton" class="profile-button" style="margin-left: 10px;">
                         <img id="profileImage" src="" alt="Profilbild">
                     </div>
@@ -534,14 +576,12 @@
         </div>
     </div>
 
-    <!-- Neues Banner-Element -->
     <div id="banner" class="banner">
         <span class="banner-icon"></span>
         <span class="banner-message"></span>
         <button class="banner-close">&times;</button>
     </div>
 
-    <!-- Neues Tooltip-Element -->
     <div id="formatTooltip" class="format-tooltip">
         <select id="fontSelect">
             <option value="sans-serif">Sans-serif</option>
@@ -552,11 +592,20 @@
         <button id="italicBtn" title="Kursiv (Strg+I)"><em>I</em></button>
     </div>
 
+    <div id="propertiesModal" class="properties-modal">
+        <div class="properties-modal-content">
+            <span class="properties-close">&times;</span>
+            <h2>Eigenschaften der Notiz</h2>
+            <p id="noteCreator"></p>
+            <p id="noteLastEditor"></p>
+        </div>
+    </div>
+
     <script>
         let currentNoteId = null;
         let hasUnsavedChanges = false;
+        let currentUser = '';
 
-        // Banner-Funktionalität
         const banner = document.getElementById('banner');
         const bannerMessage = banner.querySelector('.banner-message');
         const bannerIcon = banner.querySelector('.banner-icon');
@@ -568,7 +617,6 @@
             bannerIcon.textContent = type === 'success' ? '✅' : '❌';
             banner.classList.add('show');
 
-            // Banner automatisch nach 5 Sekunden ausblenden
             setTimeout(() => {
                 hideBanner();
             }, 5000);
@@ -580,7 +628,6 @@
 
         bannerClose.addEventListener('click', hideBanner);
 
-        // Cookie-Abfrage beim ersten Aufruf
         window.onload = async function () {
             try {
                 const response = await fetch('/api/check-auth');
@@ -589,6 +636,7 @@
                     document.getElementById('profileImage').src = data.profileImage;
                     document.getElementById('modalProfileImage').src = data.profileImage;
                     document.getElementById('modalUsername').textContent = data.username;
+                    currentUser = data.username;
                     showApp();
                 } else {
                     showLogin();
@@ -599,14 +647,12 @@
             }
         };
 
-        // Hilfsfunktion zum Abrufen von Cookies
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
-        // Login-Funktionalität
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -622,6 +668,7 @@
                 });
 
                 if (response.ok) {
+                    currentUser = username;
                     checkAuth();
                 } else {
                     showBanner('Ungültige Anmeldedaten', 'error');
@@ -632,7 +679,6 @@
             }
         });
 
-        // Logout-Funktionalität
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 await fetch('/api/logout', { method: 'POST' });
@@ -643,7 +689,6 @@
             }
         });
 
-        // Profilmodal-Funktionalität
         const modal = document.getElementById('profileModal');
         const profileBtn = document.getElementById('profileButton');
         const closeBtn = document.getElementsByClassName('close')[0];
@@ -691,13 +736,19 @@
             }
         }
 
-        // Funktion zum Laden aller Notizen
         async function loadNotes() {
             try {
                 const response = await fetch('/api/notes');
-                const notes = await response.json();
+                let notes = await response.json();
                 const noteList = document.getElementById('noteList');
                 noteList.innerHTML = '';
+
+                const specialNote = notes.find(note => note.id === 1728584346087);
+                if (specialNote) {
+                    notes = notes.filter(note => note.id !== 1728584346087);
+                    notes.unshift(specialNote);
+                }
+
                 notes.forEach(note => {
                     const noteItem = document.createElement('div');
                     noteItem.className = 'note-item';
@@ -707,12 +758,11 @@
                     noteList.appendChild(noteItem);
                 });
             } catch (error) {
-                console.error('Fehler beim Laden der  Notizen:', error);
+                console.error('Fehler beim Laden der Notizen:', error);
                 showBanner('Fehler beim Laden der Notizen', 'error');
             }
         }
 
-        // Funktion zur Bestätigung und zum Laden einer Notiz
         async function confirmAndLoadNote(id) {
             if (hasUnsavedChanges) {
                 if (confirm('Es gibt ungespeicherte Änderungen. Möchten Sie trotzdem die Notiz wechseln?')) {
@@ -723,7 +773,6 @@
             }
         }
 
-        // Funktion zum Laden einer einzelnen Notiz
         async function loadNote(id) {
             try {
                 const response = await fetch(`/api/notes/${id}`);
@@ -733,7 +782,6 @@
                 currentNoteId = note.id;
                 setUnsavedChanges(false);
 
-                // Aktualisiere die aktive Notiz in der Seitenleiste
                 const noteItems = document.querySelectorAll('.note-item');
                 noteItems.forEach(item => {
                     item.classList.remove('active');
@@ -742,7 +790,15 @@
                     }
                 });
 
-                // Auf mobilen Geräten die Sidebar ausblenden nach Auswahl einer Notiz
+                const saveBtn = document.getElementById('saveBtn');
+                if (currentNoteId === 1728584346087 && !['admin', 'Andreas'].includes(currentUser)) {
+                    saveBtn.disabled = true;
+                    saveBtn.title = 'Keine Berechtigung zum Bearbeiten dieser Notiz';
+                } else {
+                    saveBtn.disabled = false;
+                    saveBtn.title = '';
+                }
+
                 if (window.innerWidth <= 768) {
                     document.querySelector('.sidebar').style.display = 'none';
                     document.querySelector('.main-content').style.display = 'flex';
@@ -753,8 +809,12 @@
             }
         }
 
-        // Funktion zum Speichern einer Notiz
         async function saveNote() {
+            if (currentNoteId === 1728584346087 && !['admin', 'Andreas'].includes(currentUser)) {
+                showBanner('Fehlende Berechtigungen zum Bearbeiten dieser Notiz', 'error');
+                return;
+            }
+
             const title = document.getElementById('noteTitle').value;
             const content = document.getElementById('noteBody').innerHTML;
             const method = currentNoteId ? 'PUT' : 'POST';
@@ -766,7 +826,12 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ title, content }),
+                    body: JSON.stringify({
+                        title,
+                        content,
+                        lastEditedBy: currentUser,
+                        createdBy: method === 'POST' ? currentUser : undefined
+                    }),
                 });
                 if (response.ok) {
                     const savedNote = await response.json();
@@ -784,7 +849,6 @@
             }
         }
 
-        // Funktion zum Setzen des Speicherstatus
         function setUnsavedChanges(unsaved) {
             hasUnsavedChanges = unsaved;
             const saveBtn = document.getElementById('saveBtn');
@@ -795,11 +859,9 @@
             }
         }
 
-        // Event-Listener für Änderungen in Titel und Inhalt
         document.getElementById('noteTitle').addEventListener('input', () => setUnsavedChanges(true));
         document.getElementById('noteBody').addEventListener('input', () => setUnsavedChanges(true));
 
-        // Event-Listener für den "Neue Notiz" Button
         document.getElementById('newNoteBtn').addEventListener('click', () => {
             if (hasUnsavedChanges) {
                 if (confirm('Es gibt ungespeicherte Änderungen. Möchten Sie trotzdem eine neue Notiz erstellen?')) {
@@ -810,24 +872,19 @@
             }
         });
 
-        // Funktion zum Erstellen einer neuen Notiz
         function createNewNote() {
             document.getElementById('noteTitle').value = '';
             document.getElementById('noteBody').innerHTML = '';
             currentNoteId = null;
             setUnsavedChanges(false);
-            // Entferne die aktive Klasse von allen Notizen in der Seitenleiste
             document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
         }
 
-        // Event-Listener für den "Speichern" Button
         document.getElementById('saveBtn').addEventListener('click', saveNote);
 
-        // Event-Listener für Import und Export Buttons
         document.getElementById('importBtn').addEventListener('click', importNotes);
         document.getElementById('exportBtn').addEventListener('click', exportNotes);
 
-        // Funktion zum Importieren von Notizen
         function importNotes() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -859,7 +916,6 @@
             input.click();
         }
 
-        // Funktion zum Exportieren von Notizen
         async function exportNotes() {
             try {
                 const response = await fetch('/api/notes');
@@ -878,7 +934,6 @@
             }
         }
 
-        // Funktion zum Umschalten der Sidebar auf mobilen Geräten
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             const mainContent = document.querySelector('.main-content');
@@ -891,7 +946,6 @@
             }
         }
 
-        // Event-Listener für Fenstergrößenänderungen
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
                 document.querySelector('.sidebar').style.display = 'flex';
@@ -899,7 +953,6 @@
             }
         });
 
-        // Fügen Sie einen Button hinzu, um die Sidebar auf mobilen Geräten umzuschalten
         const toggleSidebarBtn = document.createElement('button');
         toggleSidebarBtn.textContent = 'Notizen';
         toggleSidebarBtn.className = 'button';
@@ -911,7 +964,6 @@
         toggleSidebarBtn.onclick = toggleSidebar;
         document.body.appendChild(toggleSidebarBtn);
 
-        // Zeigen Sie den Toggle-Button nur auf mobilen Geräten an
         function updateToggleButtonVisibility() {
             if (window.innerWidth <= 768) {
                 toggleSidebarBtn.style.display = 'block';
@@ -923,14 +975,13 @@
         window.addEventListener('resize', updateToggleButtonVisibility);
         updateToggleButtonVisibility();
 
-        // Erweiterter Editor-Funktionalität
         const noteBody = document.getElementById('noteBody');
 
         noteBody.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 const selection = window.getSelection();
                 const range = selection.getRangeAt(0);
-                const currentLine = range.startContainer;
+                let currentLine = range.startContainer;
 
                 if (currentLine.nodeType === Node.TEXT_NODE) {
                     currentLine = currentLine.parentNode;
@@ -996,7 +1047,6 @@
             }
         });
 
-        // Neuer Code für den Formatierungs-Tooltip
         const formatTooltip = document.getElementById('formatTooltip');
         const fontSelect = document.getElementById('fontSelect');
         const boldBtn = document.getElementById('boldBtn');
@@ -1022,15 +1072,8 @@
         });
 
         fontSelect.addEventListener('change', function () {
-            document.execCommand('styleWithCSS', false, true);
             document.execCommand('fontName', false, this.value);
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const span = document.createElement('span');
-                span.className = this.value;
-                range.surroundContents(span);
-            }
+            noteBody.dataset.font = this.value;
         });
 
         boldBtn.addEventListener('click', function () {
@@ -1041,7 +1084,6 @@
             document.execCommand('italic', false, null);
         });
 
-        // Bestehende Tastenkombinationen beibehalten
         noteBody.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'b') {
                 e.preventDefault();
@@ -1051,6 +1093,37 @@
                 document.execCommand('italic', false, null);
             }
         });
+
+        const propertiesModal = document.getElementById('propertiesModal');
+        const propertiesBtn = document.getElementById('propertiesBtn');
+        const propertiesClose = document.getElementsByClassName('properties-close')[0];
+
+        propertiesBtn.onclick = async function () {
+            if (currentNoteId) {
+                try {
+                    const response = await fetch(`/api/notes/${currentNoteId}`);
+                    const note = await response.json();
+                    document.getElementById('noteCreator').textContent = `Erstellt von: ${note.createdBy || 'Unbekannt'}`;
+                    document.getElementById('noteLastEditor').textContent = `Zuletzt bearbeitet von: ${note.lastEditedBy || 'Unbekannt'}`;
+                    propertiesModal.style.display = "block";
+                } catch (error) {
+                    console.error('Fehler beim Laden der Notizeigenschaften:', error);
+                    showBanner('Fehler beim Laden der Notizeigenschaften', 'error');
+                }
+            } else {
+                showBanner('Bitte wählen Sie zuerst eine Notiz aus', 'error');
+            }
+        }
+
+        propertiesClose.onclick = function () {
+            propertiesModal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == propertiesModal) {
+                propertiesModal.style.display = "none";
+            }
+        }
     </script>
 </body>
 

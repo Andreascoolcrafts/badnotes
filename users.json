@@ -1,37 +1,37 @@
 [
-    {
-        "username": "Andreas Rittsel",
-        "password": "Andreas21!",
-        "profileImage": "/images/andreasPFP.png"
-    },
-    {
-        "username": "admin",
-        "password": "admin123",
-        "profileImage": "/images/adminPFP.png"
-    },
-    {
-        "username": "TwinkieBar",
-        "password": "äigfoucifüo",
-        "profileImage": "/images/EricPFP.jpeg"
-    },
-    {
-        "username": "Arsenii",
-        "password": "arseniiPW1",
-        "profileImage": "/images/ArseniiPFP.png"
-    },
-    {
-        "username": "Jakob",
-        "password": "JakobPW2",
-        "profileImage": "/images/JakobPFP.png"
-    },
-    {
-        "username": "Kevin",
-        "password": "KevinPW3",
-        "profileImage": "/images/KevinPFP.png"
-    },
-    {
-        "username": "Oleksandr",
-        "password": "BMW-E38",
-        "profileImage": "/images/OleksandrPFP.png"
-    }
+  {
+    "username": "Andreas Rittsel",
+    "password": "Andreas21!",
+    "profileImage": "/uploads/Andreas Rittsel_1728929893141.webp"
+  },
+  {
+    "username": "admin",
+    "password": "admin123",
+    "profileImage": "/images/adminPFP.png"
+  },
+  {
+    "username": "TwinkieBar",
+    "password": "äigfoucifüo",
+    "profileImage": "/images/EricPFP.jpeg"
+  },
+  {
+    "username": "Arsenii",
+    "password": "arseniiPW1",
+    "profileImage": "/images/ArseniiPFP.png"
+  },
+  {
+    "username": "Jakob",
+    "password": "JakobPW2",
+    "profileImage": "/images/JakobPFP.png"
+  },
+  {
+    "username": "Kevin",
+    "password": "KevinPW3",
+    "profileImage": "/images/KevinPFP.png"
+  },
+  {
+    "username": "Oleksandr",
+    "password": "BMW-E38",
+    "profileImage": "/images/OleksandrPFP.png"
+  }
 ]

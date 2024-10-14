@@ -1,0 +1,19 @@
+{
+    "name": "Microgam.es BadNotes",
+    "short_name": "BadNotes",
+    "description": "Microgam.es note taking App",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#212D45",
+    "theme_color": "#212D45",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/images/badNotesIcon.png",
+            "type": "image/png"
+        }
+    ],
+    "scope": "/",
+    "related_applications": [],
+    "prefer_related_applications": false
+}

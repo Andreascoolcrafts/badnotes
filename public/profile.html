@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BadNotes Benutzerprofil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f1a2e;
+            --bg-secondary: rgba(18, 32, 57, 0.6);
+            --text-primary: #e0e7ff;
+            --text-secondary: #a7b6d4;
+            --accent: #ff8906;
+            --accent-blue: #3a6ea5;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .profile-form {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: var(--accent-blue);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--accent);
+        }
+
+        .profile-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Benutzerprofil bearbeiten</h1>
+        <form id="profileForm" class="profile-form">
+            <img id="profileImage" src="" alt="Profilbild" class="profile-image">
+            <div class="form-group">
+                <label for="username">Benutzername:</label>
+                <input type="text" id="username" name="username" readonly>
+            </div>
+            <div class="form-group">
+                <label for="password">Neues Passwort (optional):</label>
+                <input type="password" id="password" name="password">
+            </div>
+            <div class="form-group">
+                <label for="profileImageUpload">Neues Profilbild:</label>
+                  <input type="file" id="profileImageUpload" name="profileImage" accept="image/*" required>
+            </div>
+            <button type="submit">Profil aktualisieren</button>
+        </form>
+    </div>
+
+    <script>
+        const profileForm = document.getElementById('profileForm');
+        const profileImage = document.getElementById('profileImage');
+        const profileImageUpload = document.getElementById('profileImageUpload');
+        let users = [];
+
+        // Lade Benutzerdaten beim Seitenaufruf
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const authResponse = await fetch('/api/check-auth');
+                if (authResponse.ok) {
+                    const user = await authResponse.json();
+                    document.getElementById('username').value = user.username;
+                    profileImage.src = user.profileImage || '/placeholder-user.jpg';
+
+                    // Benutzerliste abrufen
+                    const usersResponse = await fetch('/api/users');
+                    if (usersResponse.ok) {
+                        users = await usersResponse.json();
+                    }
+                } else {
+                    window.location.href = '/index.html';
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der Benutzerdaten:', error);
+                alert('Fehler beim Laden der Benutzerdaten');
+            }
+        });
+
+        // Profilbild-Vorschau
+        profileImageUpload.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    profileImage.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Formular absenden
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(profileForm);
+
+            try {
+                const response = await fetch('/api/users/profile', {
+                    method: 'PUT',
+                    body: formData,
+                    credentials: 'include' // Cookies für Authentifizierung einschließen
+                });
+
+                if (response.ok) {
+                    // Neuen Dateinamen des Profilbildes in der users.json aktualisieren
+                    const updatedUser = await response.json(); // Angenommen, die Antwort enthält das aktualisierte Benutzerobjekt
+                    const userIndex = users.findIndex(u => u.username === updatedUser.username);
+                    if (userIndex !== -1) {
+                        users[userIndex].profileImage = updatedUser.profileImage; // Aktualisiere den Profilbild-Pfad
+                        // Hier kannst du auch die users.json-Datei auf dem Server aktualisieren, falls notwendig
+                    }
+
+                    alert('Profil erfolgreich aktualisiert');
+                } else {
+                    alert('Fehler beim Aktualisieren des Profils');
+                }
+            } catch (error) {
+                console.error('Fehler beim Aktualisieren des Profils:', error);
+                alert('Fehler beim Aktualisieren des Profils');
+            }
+        });
+    </script>
+
+</body>
+
+</html>

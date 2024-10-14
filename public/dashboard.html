@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BadNotes Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f1a2e;
+            --bg-secondary: rgba(18, 32, 57, 0.6);
+            --text-primary: #e0e7ff;
+            --text-secondary: #a7b6d4;
+            --accent: #ff8906;
+            --accent-blue: #3a6ea5;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1,
+        h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--accent-blue);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: var(--accent-blue);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--accent);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: var(--text-secondary);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .profile-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>BadNotes Admin Dashboard</h1>
+
+        <div class="section">
+            <h2>Benutzerverwaltung</h2>
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th>Profilbild</th>
+                        <th>Benutzername</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Benutzer werden hier dynamisch eingefügt -->
+                </tbody>
+            </table>
+            <button id="addUserBtn">Neuen Benutzer hinzufügen</button>
+            <button id="exportUsersBtn">Benutzer exportieren</button>
+        </div>
+
+        <div class="section">
+            <h2>Notizenverwaltung</h2>
+            <table id="noteTable">
+                <thead>
+                    <tr>
+                        <th>Titel</th>
+                        <th>Erstellt von</th>
+                        <th>Zuletzt bearbeitet von</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Notizen werden hier dynamisch eingefügt -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal für Benutzer hinzufügen/bearbeiten -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="userModalTitle">Benutzer hinzufügen</h2>
+            <form id="userForm">
+                <input type="text" id="username" placeholder="Benutzername" required>
+                <input type="password" id="password" placeholder="Passwort (optional)">
+                <input type="file" id="profileImageUpload" accept="image/*">
+                <img id="profileImagePreview" src="" alt="Profilbild Vorschau" style="display: none; max-width: 100px; max-height: 100px;">
+                <button type="submit">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let users = [];
+        let notes = [];
+
+        // Funktion zum Überprüfen der Admin-Berechtigung
+        function checkAdminAccess() {
+            const allowedUsers = ['admin', 'Andreas Rittsel'];
+            if (!allowedUsers.includes(currentUser)) {
+                alert('Sie haben keine Berechtigung, auf das Admin-Dashboard zuzugreifen.');
+                window.location.href = '/index.html';
+            }
+        }
+
+        // Funktion zum Laden der Benutzer
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                users = await response.json();
+                renderUserTable();
+            } catch (error) {
+                console.error('Fehler beim Laden der Benutzer:', error);
+            }
+        }
+
+        // Funktion zum Rendern der Benutzertabelle
+        function renderUserTable() {
+            const userTableBody = document.querySelector('#userTable tbody');
+            userTableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${user.profileImage || '/placeholder-user.jpg'}" alt="${user.username}" class="profile-image"></td>
+                    <td>${user.username}</td>
+                    <td>
+                        <button onclick="editUser('${user.username}')">Bearbeiten</button>
+                        <button onclick="deleteUser('${user.username}')">Löschen</button>
+                    </td>
+                `;
+                userTableBody.appendChild(row);
+            });
+        }
+
+        // Funktion zum Laden der Notizen
+        async function loadNotes() {
+            try {
+                const response = await fetch('/api/notes');
+                notes = await response.json();
+                renderNoteTable();
+            } catch (error) {
+                console.error('Fehler beim Laden der Notizen:', error);
+            }
+        }
+
+        // Funktion zum Rendern der Notizentabelle
+        function renderNoteTable() {
+            const noteTableBody = document.querySelector('#noteTable tbody');
+            noteTableBody.innerHTML = '';
+            notes.forEach(note => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${note.title}</td>
+                    <td>${note.createdBy || 'Unbekannt'}</td>
+                    <td>${note.lastEditedBy || 'Unbekannt'}</td>
+                    <td>
+                        <button onclick="toggleNoteLock(${note.id})">${note.locked ? 'Entsperren' : 'Sperren'}</button>
+                        <button onclick="deleteNote(${note.id})">Löschen</button>
+                    </td>
+                `;
+                noteTableBody.appendChild(row);
+            });
+        }
+
+        // Funktion zum Hinzufügen/Bearbeiten eines Benutzers
+        async function saveUser(event) {
+                event.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const profileImageFile = document.getElementById('profileImageUpload').files[0];
+
+                const formData = new FormData();
+                formData.append('username', username);
+                if (password.trim() !== '') {
+                    formData.append('password', password);
+                }
+                if (profileImageFile) {
+                    formData.append('profileImage', profileImageFile);
+                }
+
+                const method = userForm.dataset.editMode ? 'PUT' : 'POST';
+                const url = userForm.dataset.editMode ? `/api/users/${username}` : '/api/users';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        await loadUsers();
+                        closeUserModal();
+                        showBanner('Benutzer erfolgreich gespeichert', 'success');
+                    } else {
+                        const errorData = await response.json();
+                        showBanner(`Fehler beim Speichern des Benutzers: ${errorData.error}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Fehler beim Speichern des Benutzers:', error);
+                    showBanner('Fehler beim Speichern des Benutzers', 'error');
+                }
+            }
+
+        // Funktion zum Löschen eines Benutzers
+        async function deleteUser(username) {
+            if (confirm(`Möchten Sie den Benutzer "${username}" wirklich löschen?`)) {
+                try {
+                    const response = await fetch(`/api/users/${username}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        await loadUsers();
+                    } else {
+                        alert('Fehler beim Löschen des Benutzers');
+                    }
+                } catch (error) {
+                    console.error('Fehler beim Löschen des Benutzers:', error);
+                    alert('Fehler beim Löschen des Benutzers');
+                }
+            }
+        }
+
+        // Funktion zum Sperren/Entsperren einer Notiz
+        async function toggleNoteLock(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                note.locked = !note.locked;
+                try {
+                    const response = await fetch(`/api/notes/${noteId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(note),
+                    });
+
+                    if (response.ok) {
+                        await loadNotes();
+                    } else {
+                        alert('Fehler beim Aktualisieren der Notiz');
+                    }
+                } catch (error) {
+                    console.error('Fehler beim Aktualisieren der Notiz:', error);
+                    alert('Fehler beim Aktualisieren der Notiz');
+                }
+            }
+        }
+
+        // Funktion zum Löschen einer Notiz
+        async function deleteNote(noteId) {
+            if (confirm('Möchten Sie diese Notiz wirklich löschen?')) {
+                try {
+                    const response = await fetch(`/api/notes/${noteId}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        await loadNotes();
+                    } else {
+                        alert('Fehler beim Löschen der Notiz');
+                    }
+                } catch (error) {
+                    console.error('Fehler beim Löschen der Notiz:', error);
+                    alert('Fehler beim Löschen der Notiz');
+                }
+            }
+        }
+
+        // Funktion zum Exportieren der Benutzer
+        function exportUsers() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(users));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "users_export.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Modal-Funktionalität
+        const userModal = document.getElementById('userModal');
+        const userForm = document.getElementById('userForm');
+        const closeBtn = userModal.querySelector('.close');
+        const profileImageUpload = document.getElementById('profileImageUpload');
+        const profileImagePreview = document.getElementById('profileImagePreview');
+
+        document.getElementById('addUserBtn').onclick = function () {
+            openUserModal();
+        }
+
+        closeBtn.onclick = function () {
+            closeUserModal();
+        }
+
+        window.onclick = function (event) {
+            if (event.target == userModal) {
+                closeUserModal();
+            }
+        }
+
+        function openUserModal(username = null) {
+            const modalTitle = document.getElementById('userModalTitle');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            if (username) {
+                const user = users.find(u => u.username === username);
+                modalTitle.textContent = 'Benutzer bearbeiten';
+                usernameInput.value = user.username;
+                usernameInput.disabled = true;
+                passwordInput.value = '';
+                profileImagePreview.src = user.profileImage || '/placeholder-user.jpg';
+                profileImagePreview.style.display = 'block';
+                userForm.dataset.editMode = 'true';
+            } else {
+                modalTitle.textContent = 'Neuen Benutzer hinzufügen';
+
+                userForm.reset();
+                usernameInput.disabled = false;
+                profileImagePreview.style.display = 'none';
+                delete userForm.dataset.editMode;
+            }
+
+            userModal.style.display = 'block';
+        }
+
+        function closeUserModal() {
+            userModal.style.display = 'none';
+            userForm.reset();
+            profileImagePreview.style.display = 'none';
+        }
+
+        function editUser(username) {
+            openUserModal(username);
+        }
+
+        // Profilbild-Vorschau
+        profileImageUpload.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    profileImagePreview.src = e.target.result;
+                    profileImagePreview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Event-Listener
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/check-auth');
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.username;
+                    checkAdminAccess();
+                    await loadUsers();
+                    await loadNotes();
+                } else {
+                    window.location.href = '/index.html';
+                }
+            } catch (error) {
+                console.error('Fehler bei der Authentifizierungsprüfung:', error);
+                window.location.href = '/index.html';
+            }
+        });
+
+        userForm.addEventListener('submit', saveUser);
+        document.getElementById('exportUsersBtn').addEventListener('click', exportUsers);
+    </script>
+</body>
+
+</html>
